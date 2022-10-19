@@ -34,7 +34,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
     builtin_interfaces
 )
 
-ament_python_install_package(${PROJECT_NAME})
+ament_python_install_package(src/${PROJECT_NAME})
 
 install(PROGRAMS
   scripts/is_speaking.py
