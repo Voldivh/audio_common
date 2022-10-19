@@ -44,7 +44,6 @@ namespace audio_transport
         this->get_parameter("dst", dst_type);
 
         // The source of the audio
-        //this->declare_parameter<std::string>("src", source_type, "alsasrc");
         this->declare_parameter<std::string>("device", "");
         this->get_parameter("device", device);
 
@@ -201,7 +200,7 @@ namespace audio_transport
         gchar *debug;
 
         gst_message_parse_error(message, &err, &debug);
-        // RCLCPP_ERROR_STREAM(this->get_logger(), "gstreamer: " << err->message);
+        RCLCPP_ERROR(rclcpp::get_logger("audio_capture_on_message"), err->message);
         g_error_free(err);
         g_free(debug);
         g_main_loop_quit(server->_loop);
