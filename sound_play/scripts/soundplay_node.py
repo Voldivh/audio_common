@@ -42,6 +42,9 @@ import time
 import traceback
 
 from ament_index_python.packages import get_package_share_directory
+from catkin_pkg.package import InvalidPackage, PACKAGE_MANIFEST_FILENAME, parse_package
+from ros2pkg.api import get_package_names
+
 import rclpy.action
 import rclpy.duration
 import rclpy.logging
@@ -96,18 +99,21 @@ class SoundPlayNode(rclpy.node.Node):
             get_package_share_directory('sound_play'), 'sounds')
 
         # load plugin
-        rospack = rospkg.RosPack()
-        depend_pkgs = rospack.get_depends_on('sound_play', implicit=False)
-        depend_pkgs = ['sound_play'] + depend_pkgs
-        self.get_logger.info("Loading from plugin definitions")
-        plugin_yamls = []
-        for depend_pkg in depend_pkgs:
-            manifest = rospack.get_manifest(depend_pkg)
-            plugin_yaml = manifest.get_export('sound_play', 'plugin')
-            if len(plugin_yaml) != 0:
-                plugin_yamls += plugin_yaml
-                for plugin_y in plugin_yaml:
-                    self.get_logger.debug("Loading plugin in {}".format(plugin_y))
+        for package_name in get_package_names():
+            package_share_path = get_package_share_directory(package_name)
+            package_file_path = os.path.join(package_share_path, PACKAGE_MANIFEST_FILENAME)
+            if os.path.isfile(package_file_path):
+                try:
+                    package = parse_package(package_file_path)
+                except InvalidPackage:
+                    continue
+                for export in package.exports:
+                    if export.tagname == 'sound_play':
+                        if 'plugin' in export.attributes:
+                            plugin_path = export.attributes['plugin']
+                            plugin_yamls += plugin_path
+                            for plugin_y in plugin_yaml:
+                                self.get_logger.debug("Loading plugin in {}".format(plugin_y))
 
         plugin_dict = {}
         for plugin_yaml in plugin_yamls:

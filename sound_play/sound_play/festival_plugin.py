@@ -1,7 +1,7 @@
 import os
 import tempfile
 
-import rospy
+import rclpy
 
 from sound_play.sound_play_plugin import SoundPlayPlugin
 
@@ -12,6 +12,7 @@ class FestivalPlugin(SoundPlayPlugin):
 
     def __init__(self):
         super(FestivalPlugin, self).__init__()
+        self.node = rclpy.Node("festival_plugin")
 
     def sound_play_say_plugin(self, text, voice):
         if voice is None or voice == '':
@@ -44,7 +45,7 @@ class FestivalPlugin(SoundPlayPlugin):
                     # So we hit the same catch block
                     raise OSError
             except OSError:
-                rospy.logerr(
+                self.node.get_logger().error(
                     'Sound synthesis failed.'
                     'Is festival installed?'
                     'Is a festival voice installed?'

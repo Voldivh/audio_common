@@ -47,7 +47,7 @@
    <member_of_group>rosidl_interface_packages</member_of_group>
 
    <export>
-      <cpp cflags="-I${prefix}/include -I${prefix}/msg/cpp" />
-      <sound_play plugin="${prefix}/sound_play_plugin.yaml" />
+      <build_type>ament_cmake</build_type>
+      <sound_play plugin="${prefix}/launch/sound_play_plugin.yaml" />
    </export>
 </package>

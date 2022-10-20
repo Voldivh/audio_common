@@ -1,47 +1,51 @@
-#***********************************************************
-#* Software License Agreement (BSD License)
-#*
-#*  Copyright (c) 2009, Willow Garage, Inc.
-#*  All rights reserved.
-#*
-#*  Redistribution and use in source and binary forms, with or without
-#*  modification, are permitted provided that the following conditions
-#*  are met:
-#*
-#*   * Redistributions of source code must retain the above copyright
-#*     notice, this list of conditions and the following disclaimer.
-#*   * Redistributions in binary form must reproduce the above
-#*     copyright notice, this list of conditions and the following
-#*     disclaimer in the documentation and/or other materials provided
-#*     with the distribution.
-#*   * Neither the name of the Willow Garage nor the names of its
-#*     contributors may be used to endorse or promote products derived
-#*     from this software without specific prior written permission.
-#*
-#*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-#*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-#*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-#*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-#*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-#*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-#*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-#*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-#*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-#*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-#*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-#*  POSSIBILITY OF SUCH DAMAGE.
-#***********************************************************
+# **********************************************************
+#  Software License Agreement (BSD License)
+# 
+#   Copyright (c) 2009, Willow Garage, Inc.
+#   All rights reserved.
+# 
+#   Redistribution and use in source and binary forms, with or without
+#   modification, are permitted provided that the following conditions
+#   are met:
+# 
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above
+#      copyright notice, this list of conditions and the following
+#      disclaimer in the documentation and/or other materials provided
+#      with the distribution.
+#    * Neither the name of the Willow Garage nor the names of its
+#      contributors may be used to endorse or promote products derived
+#      from this software without specific prior written permission.
+# 
+#   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+#   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+#   COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+#   INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+#   BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#   LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#   CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#   LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+#   ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#   POSSIBILITY OF SUCH DAMAGE.
+# **********************************************************
 
 # Author: Blaise Gassend
 
-import rospy
-import roslib
-import actionlib
-import os, sys
-from actionlib_msgs.msg import GoalStatusArray
+import os
+from time import time
+
+from ament_index_python.packages import get_package_share_directory
+from rclpy.duration import Duration
+import rclpy
+import rclpy.action
+
+
+from action_msgs.msg import GoalStatusArray
+from sound_play.action import SoundRequest as SoundRequestAction
 from sound_play.msg import SoundRequest
-from sound_play.msg import SoundRequestGoal
-from sound_play.msg import SoundRequestAction
 
 ## \brief Class that publishes messages to the sound_play node.
 ##
@@ -91,7 +95,7 @@ class Sound(object):
 
 class SoundClient(object):
 
-    def __init__(self, blocking=False, sound_action='sound_play', sound_topic='robotsound'):
+    def __init__(self, node, blocking=False, sound_action='sound_play', sound_topic='robotsound'):
         """
 
         The SoundClient can send SoundRequests in two modes: non-blocking mode
@@ -120,11 +124,15 @@ class SoundClient(object):
 
         # NOTE: only one of these will be used at once, but we need to create
         # both the publisher and actionlib client here.
-        self.actionclient = actionlib.SimpleActionClient(
-            sound_action, SoundRequestAction)
-        self.pub = rospy.Publisher(sound_topic, SoundRequest, queue_size=5)
-        self.sub = rospy.Subscriber(
-            '{}/status'.format(sound_action), GoalStatusArray, self._action_status_cb)
+        self.node = node
+        self.actionclient = rclpy.action.ActionClient(
+            self.node, SoundRequestAction, sound_action)
+        self.pub = self.node.create_publisher(SoundRequest, sound_topic, 5)
+        self.sub = self.node.create_subscription(
+            GoalStatusArray,
+            '{}/_action/status'.format(sound_action),
+            self._action_status_cb,
+            1)
 
 ## \brief Create a voice Sound.
 ##
@@ -143,7 +151,8 @@ class SoundClient(object):
 ## machine running the sound_play node.
     def waveSound(self, sound, volume=1.0):
         if sound[0] != "/":
-          rootdir = os.path.join(roslib.packages.get_pkg_dir('sound_play'),'sounds')
+          rootdir = os.path.join(
+                get_package_share_directory('sound_play'), 'sounds')
           sound = rootdir + "/" + sound
         return Sound(self, SoundRequest.PLAY_FILE, sound, volume=volume)
 
@@ -197,7 +206,8 @@ class SoundClient(object):
 
     def playWave(self, sound, volume=1.0, **kwargs):
         if sound[0] != "/":
-          rootdir = os.path.join(roslib.packages.get_pkg_dir('sound_play'),'sounds')
+          rootdir = os.path.join(
+                 get_package_share_directory('sound_play'), 'sounds')
           sound = rootdir + "/" + sound
         self.sendMsg(SoundRequest.PLAY_FILE, SoundRequest.PLAY_ONCE, sound,
                      vol=volume, **kwargs)
@@ -211,7 +221,8 @@ class SoundClient(object):
 
     def startWave(self, sound, volume=1.0, **kwargs):
         if sound[0] != "/":
-          rootdir = os.path.join(roslib.packages.get_pkg_dir('sound_play'),'sounds')
+          rootdir = os.path.join(
+                get_package_share_directory('sound_play'), 'sounds')
           sound = rootdir + "/" + sound
         self.sendMsg(SoundRequest.PLAY_FILE, SoundRequest.PLAY_START, sound,
                      vol=volume, **kwargs)
@@ -225,7 +236,8 @@ class SoundClient(object):
 
     def stopWave(self,sound):
         if sound[0] != "/":
-          rootdir = os.path.join(roslib.package.get_pkg_dir('sound_play'),'sounds')
+          rootdir = os.path.join(
+                get_package_share_directory('sound_play'), 'sounds')
           sound = rootdir + "/" + sound
         self.sendMsg(SoundRequest.PLAY_FILE, SoundRequest.PLAY_STOP, sound)
 
@@ -304,7 +316,7 @@ class SoundClient(object):
 
     def sendMsg(
         self, snd, cmd, s, arg2="", vol=1.0, replace=True,
-        server_timeout=rospy.Duration(),result_timeout=rospy.Duration(),
+        server_timeout = Duration(), result_timeout = Duration(),
         **kwargs
     ):
         """
@@ -328,35 +340,35 @@ class SoundClient(object):
         msg.arg = s
         msg.arg2 = arg2
 
-        rospy.logdebug('Sending sound request with volume = {}'
+        self.get_logger.debug('Sending sound request with volume = {}'
                        ' and blocking = {}'.format(msg.volume, blocking))
 
         # Defensive check for the existence of the correct communicator.
         if not blocking and not self.pub:
-            rospy.logerr('Publisher for SoundRequest must exist')
+            self.get_logger.error('Publisher for SoundRequest must exist')
             return
         if blocking and not self.actionclient:
-            rospy.logerr('Action client for SoundRequest does not exist.')
+            self.get_logger.error('Action client for SoundRequest does not exist.')
             return
 
         if not blocking:  # Publish message directly and return immediately
             self.pub.publish(msg)
             if self.pub.get_num_connections() < 1:
-                rospy.logwarn("Sound command issued, but no node is subscribed"
+                self.get_logger.warn("Sound command issued, but no node is subscribed"
                               " to the topic. Perhaps you forgot to run"
                               " soundplay_node.py?")
         else:  # Block until result comes back.
             assert self.actionclient, 'Actionclient must exist'
-            rospy.logdebug('Sending action client sound request [blocking]')
+            self.get_logger.debug('Sending action client sound request [blocking]')
             if not self.actionclient.wait_for_server(timeout=server_timeout):
                 return
-            goal = SoundRequestGoal()
+            goal = SoundRequestAction.Goal()
             goal.sound_request = msg
             while not replace and self._playing:
-                rospy.sleep(0.1)
+                rclpy.sleep(0.1)
             self.actionclient.send_goal(goal)
             if self.actionclient.wait_for_result(timeout=result_timeout):
-                rospy.logdebug('sound request response received')
+                self.get_logger.debug('sound request response received')
         return
 
     def _action_status_cb(self, msg):

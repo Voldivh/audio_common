@@ -14,6 +14,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(audio_common_msgs REQUIRED)
 find_package(action_msgs REQUIRED)
+#find_package(launch_testing_ament_cmake)
 
 include_directories(rclcpp audio_common_msgs action_msgs builtin_interfaces)
 
@@ -34,7 +35,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
     builtin_interfaces
 )
 
-ament_python_install_package(src/${PROJECT_NAME})
+ament_python_install_package(${PROJECT_NAME})
 
 install(PROGRAMS
   scripts/is_speaking.py
@@ -44,9 +45,8 @@ install(PROGRAMS
   scripts/say.py
   scripts/shutup.py
   scripts/soundplay_node.py
-  # scripts/test.py
-  # scripts/test_actionlib_client.py
-  # scripts/test_sound_client.py
+  scripts/test/test.py
+  scripts/test/test_actionlib_client.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -63,5 +63,14 @@ install(DIRECTORY sounds
 )
 
 ament_export_dependencies(rosidl_default_runtime)
+
+if(BUILD_TESTING)
+  find_package(ament_cmake_clang_format REQUIRED)
+  find_package(ament_cmake_flake8 REQUIRED)
+  enable_testing()
+  #add_launch_test(scripts/test/test_sound_client.py)
+  ament_flake8()
+  ament_clang_format()
+endif()
 
 ament_package()
