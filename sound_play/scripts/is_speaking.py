@@ -1,29 +1,29 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-import rospy
+import rclpy
+import rclpy.node
 
-from actionlib_msgs.msg import GoalStatus
-from actionlib_msgs.msg import GoalStatusArray
-import std_msgs.msg
+from action_msgs.msg import GoalStatus
+from action_msgs.msg import GoalStatusArray
+from std_msgs.msg import Bool
 
-
-class IsSpeaking(object):
+class IsSpeakingNode(rclpy.node.Node):
 
     def __init__(self):
-        super(IsSpeaking, self).__init__()
+        super().__init__('is_speaking')
 
-        self.sub = rospy.Subscriber(
-            '~robotsound',
-            GoalStatusArray,
-            callback=self.callback,
-            queue_size=1)
+        self.sub = self.create_subscription(
+            GoalStatusArray, '~/robotsound', self.callback, 1)
 
         self.is_speaking = False
-        self.pub_speech_flag = rospy.Publisher(
-            '~output/is_speaking',
-            std_msgs.msg.Bool, queue_size=1)
+        self.pub_speech_flag = self.create_publisher(
+            Bool, '~/output/is_speaking', 1)
 
-        self.timer = rospy.Timer(rospy.Duration(0.01), self.speech_timer_cb)
+        self.create_timer(0.01, self.speech_timer_cb)
+    
+    def __del__(self):
+        self.destroy_timer(self.timer)
+        self.dispose()
 
     def check_speak_status(self, status_msg):
         """Returns True when speaking.
@@ -46,10 +46,13 @@ class IsSpeaking(object):
 
     def speech_timer_cb(self, timer):
         self.pub_speech_flag.publish(
-            std_msgs.msg.Bool(self.is_speaking))
+            Bool(data=self.is_speaking))
 
 
 if __name__ == '__main__':
-    rospy.init_node('is_speaking')
-    app = IsSpeaking()
-    rospy.spin()
+    rclpy.init()
+    is_speaking_node = IsSpeakingNode()
+    rclpy.spin(is_speaking_node)
+    is_speaking_node.destroy_node()
+    del is_speaking_node
+    rclpy.shutdown()
