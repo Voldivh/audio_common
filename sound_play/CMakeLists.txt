@@ -14,7 +14,6 @@ find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(audio_common_msgs REQUIRED)
 find_package(action_msgs REQUIRED)
-#find_package(launch_testing_ament_cmake)
 
 include_directories(rclcpp audio_common_msgs action_msgs builtin_interfaces)
 
@@ -44,6 +43,7 @@ install(PROGRAMS
   scripts/playpackage.py
   scripts/say.py
   scripts/shutup.py
+  scripts/soundclient_example.py
   scripts/soundplay_node.py
   scripts/test/test.py
   scripts/test/test_actionlib_client.py
@@ -68,7 +68,6 @@ if(BUILD_TESTING)
   find_package(ament_cmake_clang_format REQUIRED)
   find_package(ament_cmake_flake8 REQUIRED)
   enable_testing()
-  #add_launch_test(scripts/test/test_sound_client.py)
   ament_flake8()
   ament_clang_format()
 endif()

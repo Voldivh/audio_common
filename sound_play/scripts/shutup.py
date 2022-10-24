@@ -47,7 +47,7 @@ if __name__ == '__main__':
     rclpy.init()
     node = rclpy.create_node('shutup' + str(os.getpid()))
 
-    soundhandle = SoundClient()
+    soundhandle = SoundClient(node)
     # let ROS get started...
     time.sleep(0.5)
 

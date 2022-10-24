@@ -91,7 +91,7 @@ class SoundPlayNode(rclpy.node.Node):
         self.loop_rate = self.get_parameter('loop_rate').value
         self.device = self.get_parameter('device').value
         self.loop_rate = self.get_parameter('default_voice').value
-        self.device = self.get_parameter('plugin').value
+        self.plugin_name = self.get_parameter('plugin').value
 
         self.diagnostic_pub = self.create_publisher(
             DiagnosticArray, "/diagnostics", 1)
@@ -107,20 +107,21 @@ class SoundPlayNode(rclpy.node.Node):
                     package = parse_package(package_file_path)
                 except InvalidPackage:
                     continue
+                plugin_yamls = []
                 for export in package.exports:
                     if export.tagname == 'sound_play':
                         if 'plugin' in export.attributes:
                             plugin_path = export.attributes['plugin']
                             plugin_yamls += plugin_path
-                            for plugin_y in plugin_yaml:
-                                self.get_logger.debug("Loading plugin in {}".format(plugin_y))
+                            for plugin_y in plugin_yamls:
+                                self.get_logger().debug("Loading plugin in {}".format(plugin_y))
 
         plugin_dict = {}
         for plugin_yaml in plugin_yamls:
             if not os.path.exists(plugin_yaml):
-                self.get_logger.error(
+                self.get_logger().error(
                     'Failed to load plugin yaml: {}'.format(plugin_yaml))
-                self.get_logger.error(
+                self.get_logger().error(
                     'Missing plugin yaml: {}'.format(plugin_yaml))
                 continue
             with open(plugin_yaml) as f:

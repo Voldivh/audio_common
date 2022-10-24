@@ -69,7 +69,7 @@ def play_nonblocking(node):
     node.get_logger().info('Example: Playing sounds in *non-blocking* mode.')
     # NOTE: you must sleep at the beginning to let the SoundClient publisher
     # establish a connection to the soundplay_node.
-    soundhandle = SoundClient(blocking=False)
+    soundhandle = SoundClient(node, blocking=False)
     time.sleep(1)
 
     # In the non-blocking version you need to sleep between calls.

@@ -13,17 +13,16 @@ class IsSpeakingNode(rclpy.node.Node):
         super().__init__('is_speaking')
 
         self.sub = self.create_subscription(
-            GoalStatusArray, '~/robotsound', self.callback, 1)
+            GoalStatusArray, 'robotsound', self.callback, 1)
 
         self.is_speaking = False
         self.pub_speech_flag = self.create_publisher(
-            Bool, '~/output/is_speaking', 1)
+            Bool, 'output/is_speaking', 1)
 
-        self.create_timer(0.01, self.speech_timer_cb)
+        self.timer = self.create_timer(0.01, self.speech_timer_cb)
     
     def __del__(self):
         self.destroy_timer(self.timer)
-        self.dispose()
 
     def check_speak_status(self, status_msg):
         """Returns True when speaking.
@@ -44,7 +43,7 @@ class IsSpeakingNode(rclpy.node.Node):
                 return
         self.is_speaking = False
 
-    def speech_timer_cb(self, timer):
+    def speech_timer_cb(self):
         self.pub_speech_flag.publish(
             Bool(data=self.is_speaking))
 

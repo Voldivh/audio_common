@@ -127,7 +127,8 @@ class SoundClient(object):
         self.node = node
         self.actionclient = rclpy.action.ActionClient(
             self.node, SoundRequestAction, sound_action)
-        self.pub = self.node.create_publisher(SoundRequest, sound_topic, 5)
+        self.sound_topic = sound_topic
+        self.pub = self.node.create_publisher(SoundRequest, self.sound_topic, 5)
         self.sub = self.node.create_subscription(
             GoalStatusArray,
             '{}/_action/status'.format(sound_action),
@@ -316,7 +317,7 @@ class SoundClient(object):
 
     def sendMsg(
         self, snd, cmd, s, arg2="", vol=1.0, replace=True,
-        server_timeout = Duration(), result_timeout = Duration(),
+        server_timeout = 0.0, result_timeout = 0.0,
         **kwargs
     ):
         """
@@ -335,32 +336,32 @@ class SoundClient(object):
         msg = SoundRequest()
         msg.sound = snd
         # Threshold volume between 0 and 1.
-        msg.volume = max(0, min(1, vol))
+        msg.volume = max(0.0, min(1.0, vol))
         msg.command = cmd
         msg.arg = s
         msg.arg2 = arg2
 
-        self.get_logger.debug('Sending sound request with volume = {}'
+        self.node.get_logger().debug('Sending sound request with volume = {}'
                        ' and blocking = {}'.format(msg.volume, blocking))
 
         # Defensive check for the existence of the correct communicator.
         if not blocking and not self.pub:
-            self.get_logger.error('Publisher for SoundRequest must exist')
+            self.node.get_logger().error('Publisher for SoundRequest must exist')
             return
         if blocking and not self.actionclient:
-            self.get_logger.error('Action client for SoundRequest does not exist.')
+            self.node.get_logger().error('Action client for SoundRequest does not exist.')
             return
 
         if not blocking:  # Publish message directly and return immediately
             self.pub.publish(msg)
-            if self.pub.get_num_connections() < 1:
-                self.get_logger.warn("Sound command issued, but no node is subscribed"
+            if self.node.count_publishers(self.sound_topic) < 1:
+                self.node.get_logger().warn("Sound command issued, but no node is subscribed"
                               " to the topic. Perhaps you forgot to run"
                               " soundplay_node.py?")
         else:  # Block until result comes back.
             assert self.actionclient, 'Actionclient must exist'
-            self.get_logger.debug('Sending action client sound request [blocking]')
-            if not self.actionclient.wait_for_server(timeout=server_timeout):
+            self.node.get_logger().debug('Sending action client sound request [blocking]')
+            if not self.actionclient.wait_for_server(timeout_sec=server_timeout):
                 return
             goal = SoundRequestAction.Goal()
             goal.sound_request = msg
@@ -368,7 +369,7 @@ class SoundClient(object):
                 rclpy.sleep(0.1)
             self.actionclient.send_goal(goal)
             if self.actionclient.wait_for_result(timeout=result_timeout):
-                self.get_logger.debug('sound request response received')
+                self.node.get_logger().debug('sound request response received')
         return
 
     def _action_status_cb(self, msg):
