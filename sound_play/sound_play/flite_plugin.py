@@ -1,9 +1,9 @@
 import os
 import tempfile
 
+from ament_index_python.packages import get_package_share_directory
+import rclpy
 import resource_retriever
-import rospkg
-import rospy
 
 from sound_play.sound_play_plugin import SoundPlayPlugin
 
@@ -14,9 +14,9 @@ class FlitePlugin(SoundPlayPlugin):
 
     def __init__(self):
         super(FlitePlugin, self).__init__()
-        self.rospack = rospkg.RosPack()
+        self.node = rclpy.Node("flite_plugin")
         self.default_voice_path = os.path.join(
-            self.rospack.get_path('sound_play'),
+            get_package_share_directory('sound_play'),
             'resources/flitevox')
 
     def sound_play_say_plugin(self, text, voice):
@@ -41,7 +41,7 @@ class FlitePlugin(SoundPlayPlugin):
                 # So we hit the same catch block
                 raise OSError
         except OSError:
-            rospy.logerr(
+            self.node.get_logger().error(
                 'Sound synthesis failed.'
                 'Is flite installed?'
                 'Is a flite voice installed?'

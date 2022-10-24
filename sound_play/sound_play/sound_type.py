@@ -1,7 +1,8 @@
 import os
 import threading
 
-import rospy
+import rclpy
+import rclpy.logging
 
 from sound_play.msg import SoundRequest
 
@@ -15,8 +16,7 @@ except Exception:
 Error opening pygst. Is gstreamer installed?
 **************************************************************
 """
-    rospy.logfatal(str)
-    # print str
+    rclpy.logging.get_logger('sound_type').fatal(str)
     exit(1)
 
 
@@ -25,7 +25,8 @@ class SoundType(object):
     LOOPING = 1
     COUNTING = 2
 
-    def __init__(self, file, device, volume=1.0):
+    def __init__(self, node, file, device, volume=1.0):
+        self.node = node
         self.lock = threading.RLock()
         self.state = self.STOPPED
         self.sound = Gst.ElementFactory.make("playbin", None)
@@ -42,7 +43,7 @@ class SoundType(object):
         elif os.path.isfile(file):
             uri = "file://" + os.path.abspath(file)
         else:
-            rospy.logerr('Error: URI is invalid: %s' % file)
+            self.node.get_logger().error('Error: URI is invalid: %s' % file)
 
         self.uri = uri
         self.volume = volume
@@ -63,7 +64,7 @@ class SoundType(object):
                 self.stop()
 
     def __del__(self):
-        # stop our GST object so that it gets garbage-collected
+        self.destroy_timer(self.timer)
         self.dispose()
 
     def update(self):
@@ -96,7 +97,8 @@ class SoundType(object):
                 self.sink = None
                 self.state = self.STOPPED
         except Exception as e:
-            rospy.logerr('Exception in dispose: %s' % str(e))
+            self.node.get_logger().error(
+                'Exception in dispose: %s' % str(e))
         finally:
             self.lock.release()
 
@@ -112,7 +114,7 @@ class SoundType(object):
     def single(self):
         self.lock.acquire()
         try:
-            rospy.logdebug("Playing %s" % self.uri)
+            self.node.get_logger().debug("Playing %s" % self.uri)
             self.staleness = 0
             if self.state == self.LOOPING:
                 self.stop()

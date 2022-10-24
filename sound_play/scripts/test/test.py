@@ -40,28 +40,82 @@ import os
 import time
 
 import rclpy
-import rclpy.utilities
+
+from sound_play.msg import SoundRequest
 from sound_play.libsoundplay import SoundClient
+
 
 if __name__ == '__main__':
     rclpy.init()
-    node = rclpy.create_node('shutup' + str(os.getpid()))
-
+    node = rclpy.create_node('soundplay_test' + str(os.getpid()))
     soundhandle = SoundClient(node)
-    # let ROS get started...
-    time.sleep(0.5)
+
+    time.sleep(1)
+
+    soundhandle.stopAll()
 
     node.get_logger().info(
-        "Sending stopAll commande every 100 ms.")
-    node.get_logger().info(
-        "Note: This will not prevent a node that "
-        "is continuing to issue commands")
-    node.get_logger().info("from producing sound.")
-    node.get_logger().info("Press Ctrl+C to exit.")
+        "This script will run continuously until you hit CTRL+C, "
+        "testing various sound_node sound types.")
 
-    while rclpy.ok():
-        soundhandle.stopAll()
-        try:
-            time.sleep(.1)
-        except Exception:
-            pass
+    node.get_logger().info('wave')
+    soundhandle.playWave('say-beep.wav')
+    time.sleep(2)
+
+    node.get_logger().info('quiet wave')
+    soundhandle.playWave('say-beep.wav', 0.3)
+    time.sleep(2)
+
+    node.get_logger().info('plugging')
+    soundhandle.play(SoundRequest.NEEDS_PLUGGING)
+    time.sleep(2)
+
+    node.get_logger().info('quiet plugging')
+    soundhandle.play(SoundRequest.NEEDS_PLUGGING, 0.3)
+    time.sleep(2)
+
+    node.get_logger().info('unplugging')
+    soundhandle.play(SoundRequest.NEEDS_UNPLUGGING)
+    time.sleep(2)
+
+    node.get_logger().info('plugging badly')
+    soundhandle.play(SoundRequest.NEEDS_PLUGGING_BADLY)
+    time.sleep(2)
+
+    node.get_logger().info('unplugging badly')
+    soundhandle.play(SoundRequest.NEEDS_UNPLUGGING_BADLY)
+    time.sleep(2)
+
+    s1 = soundhandle.builtinSound(SoundRequest.NEEDS_UNPLUGGING_BADLY)
+    s2 = soundhandle.waveSound("say-beep.wav")
+    s3 = soundhandle.voiceSound("Testing the new A P I")
+    s4 = soundhandle.builtinSound(SoundRequest.NEEDS_UNPLUGGING_BADLY, 0.3)
+    s5 = soundhandle.waveSound("say-beep.wav", 0.3)
+    s6 = soundhandle.voiceSound("Testing the new A P I", 0.3)
+
+    node.get_logger().info("New API start voice")
+    s3.repeat()
+    time.sleep(3)
+
+    node.get_logger().info("New API start voice quiet")
+    s6.play()
+    time.sleep(3)
+
+    node.get_logger().info("New API wave")
+    s2.repeat()
+    time.sleep(2)
+
+    node.get_logger().info("New API wave quiet")
+    s5.play()
+    time.sleep(2)
+
+    node.get_logger().info("New API builtin")
+    s1.play()
+    time.sleep(2)
+
+    node.get_logger().info("New API builtin quiet")
+    s4.play()
+    time.sleep(2)
+
+    node.get_logger().info("New API stop")
+    s3.stop()

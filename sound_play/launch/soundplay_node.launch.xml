@@ -1,0 +1,26 @@
+<!-- 
+This launch file starts soundplay_node.py, which is the node that plays
+sounds based on messages on the robotsound topic.  
+-->
+
+<launch>
+  <arg name="device" default="" />
+  <arg name="loop_rate" default="100" />
+  <arg name="default_voice" default="" />
+  <arg name="plugin" default="sound_play/festival_plugin" />
+
+  <node name="soundplay_node" pkg="sound_play" exec="soundplay_node.py">
+    <param name="device" value="$(var device)" />
+    <param name="loop_rate" value="$(var loop_rate)" />
+    <param name="default_voice" value="$(var default_voice)" />
+    <param name="plugin" value="$(var plugin)" />
+  </node>
+
+  <group>
+    <push-ros-namespace namespace="sound_play"/>
+    <node name="is_speaking" pkg="sound_play" exec="is_speaking.py">
+      <remap from="robotsound" to="status" />
+      <remap from="output/is_speaking" to="is_speaking" />
+    </node>
+  </group>
+</launch>
