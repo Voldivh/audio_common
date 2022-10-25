@@ -44,6 +44,9 @@
    <exec_depend>flite</exec_depend>
    <exec_depend>resource_retriever</exec_depend>
 
+   <test_depend>ament_cmake_clang_format</test_depend>
+   <test_depend>ament_cmake_flake8</test_depend>
+
    <member_of_group>rosidl_interface_packages</member_of_group>
 
    <export>
