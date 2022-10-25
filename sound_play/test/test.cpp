@@ -35,13 +35,12 @@
 #include <sound_play/sound_play.h>
 #include <unistd.h>
 
-void sleepok(int t, ros::NodeHandle &nh)
+void sleepok(int t, ros::NodeHandle & nh)
 {
-  if (nh.ok())
-      sleep(t);
+  if (nh.ok()) sleep(t);
 }
 
-int main(int argc, char **argv)
+int main(int argc, char ** argv)
 {
   ros::init(argc, argv, "sound_play_test");
 
@@ -50,15 +49,14 @@ int main(int argc, char **argv)
   sound_play::SoundClient quiet_sc;
 
   sleepok(1, nh);
-  
-  while(nh.ok())
-  {
+
+  while (nh.ok()) {
     sc.say("Hello world!");
     sleepok(2, nh);
     quiet_sc.say("Hello world!");
     sleepok(2, nh);
 
-    const char *str1 = "I am annoying.";
+    const char * str1 = "I am annoying.";
     sc.repeat(str1);
     sleepok(4, nh);
     sc.stopSaying(str1);
@@ -71,7 +69,7 @@ int main(int argc, char **argv)
     quiet_sc.playWave("/usr/share/xemacs21/xemacs-packages/etc/sounds/boing.wav");
     sleepok(2, nh);
 
-    const char *str2 = "/usr/share/xemacs21/xemacs-packages/etc/sounds/piano-beep.wav";
+    const char * str2 = "/usr/share/xemacs21/xemacs-packages/etc/sounds/piano-beep.wav";
     sc.startWave(str2);
     sleepok(4, nh);
     sc.stopWave(str2);
@@ -103,11 +101,12 @@ int main(int argc, char **argv)
     s1.stop();
 
     sleepok(2, nh);
-    sound_play::Sound s2 = quiet_sc.waveSound("/usr/share/xemacs21/xemacs-packages/etc/sounds/boing.wav");
+    sound_play::Sound s2 =
+      quiet_sc.waveSound("/usr/share/xemacs21/xemacs-packages/etc/sounds/boing.wav");
     s2.repeat();
     sleepok(1, nh);
     s2.stop();
-		
+
     sleepok(2, nh);
     sound_play::Sound s3 = sc.voiceSound("This is a really long sentence that will get cut off.");
     s3.play();
@@ -115,7 +114,8 @@ int main(int argc, char **argv)
     s3.stop();
 
     sleepok(2, nh);
-    sound_play::Sound s4 = quiet_sc.voiceSound("This is a really long sentence that will get cut off.");
+    sound_play::Sound s4 =
+      quiet_sc.voiceSound("This is a really long sentence that will get cut off.");
     s4.play();
     sleepok(1, nh);
     s4.stop();

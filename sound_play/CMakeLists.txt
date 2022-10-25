@@ -68,7 +68,6 @@ if(BUILD_TESTING)
   find_package(ament_cmake_clang_format REQUIRED)
   find_package(ament_cmake_flake8 REQUIRED)
   enable_testing()
-  ament_flake8()
   ament_clang_format()
 endif()
 
